@@ -1,0 +1,149 @@
+(function(root,factory){
+  if(typeof module==='object'&&module.exports)module.exports=factory();
+  else root.DotaHeroEntrances=factory();
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  'use strict';
+  // Skill-inspired motion cues. These are original interpretations, not in-game spell effects.
+  // id | skill cue | opening motion | impact motion | portrait entrance | palette
+  const rows=`
+1|法力虚空|rune|gravity|iris|violet
+2|淘汰之刃|slash|blood|split|red
+3|噩梦|smoke|prison|wipe|shadow
+4|血之祭祀|blood|trap|rise|red
+5|极寒领域|frost|storm|shatter|ice
+6|霜冻箭|arrow|frost|split|ice
+7|回音击|quake|sound|shatter|earth
+8|剑刃风暴|slash|storm|spin|orange
+9|月神之箭|arrow|moon|split|blue
+10|波浪形态|wave|dash|wipe|teal
+11|魂之挽歌|spirit|wave|rise|shadow
+12|幻影冲锋|mirror|dash|pull|violet
+13|幻象法球|portal|spirit|iris|pink
+14|肉钩|hook|chain|pull|red
+15|静电连接|lightning|gravity|pull|blue
+16|沙尘暴|sand|smoke|wipe|earth
+17|球状闪电|portal|lightning|dash|blue
+18|风暴之拳|hammer|storm|impact|blue
+19|山崩|stone|quake|shatter|earth
+20|移形换位|mirror|spirit|swap|violet
+21|强力击|arrow|storm|split|green
+22|雷击|lightning|storm|split|gold
+23|幽灵船|wave|spirit|rise|blue
+25|神灭斩|laser|fire|split|orange
+26|死亡之指|laser|rune|impact|red
+27|群蛇守卫|summon|roots|iris|green
+28|深海重击|impact|wave|shatter|blue
+29|毁灭|wave|quake|rise|teal
+30|死亡守卫|summon|target|iris|shadow
+31|连环霜冻|frost|portal|spin|ice
+32|烟幕|smoke|slash|wipe|shadow
+33|黑洞|vortex|gravity|iris|violet
+34|激光|laser|gear|split|gold
+35|暗杀|target|laser|split|earth
+36|死神镰刀|slash|spirit|wipe|green
+37|混乱之祭|meteor|summon|impact|red
+38|原始咆哮|sound|beast|impact|earth
+39|超声冲击波|sound|shadow|wipe|pink
+40|剧毒新星|poison|wave|iris|green
+41|时间结界|time|prison|iris|violet
+42|重生|spirit|sun|rise|gold
+43|驱使恶灵|spirit|summon|wipe|teal
+44|恩赐解脱|slash|shadow|split|red
+45|幽冥爆轰|rune|impact|iris|green
+46|灵能陷阱|trap|spirit|iris|pink
+47|蝮蛇突袭|poison|dash|pull|green
+48|月蚀|moon|laser|iris|blue
+49|古龙形态|fire|wing|rise|orange
+50|薄葬|shield|shadow|iris|violet
+51|弹幕冲击|gear|meteor|impact|earth
+52|脉冲新星|lightning|wave|iris|violet
+53|发芽|roots|prison|rise|green
+54|感染|blood|portal|pull|red
+55|真空|gravity|mirror|pull|violet
+56|灼热之箭|arrow|fire|split|orange
+57|守护天使|shield|sun|rise|gold
+58|魅惑|spirit|roots|iris|green
+59|牺牲|fire|blood|impact|red
+60|黑暗时间|smoke|wing|wipe|shadow
+61|孵化蜘蛛|web|summon|iris|green
+62|追踪术|target|shadow|wipe|gold
+63|时光倒流|time|dash|swap|teal
+64|冰火交加|frost|fire|split|orange
+65|火焰飞行|fire|dash|rise|orange
+66|神圣劝化|summon|sun|iris|gold
+67|鬼影重重|shadow|mirror|wipe|violet
+68|冰晶爆轰|frost|impact|shatter|ice
+69|末日|fire|prison|impact|red
+70|激怒|beast|slash|impact|red
+71|暗影冲刺|dash|shadow|pull|violet
+72|召唤飞弹|meteor|target|impact|earth
+73|化学狂暴|poison|fire|rise|green
+74|混沌陨石|meteor|rune|impact|orange
+75|全领域静默|prison|sound|iris|white
+76|星体禁锢|portal|prison|iris|violet
+77|变身|moon|beast|rise|earth
+78|元素分离|summon|storm|shatter|orange
+79|崩裂禁锢|prison|mirror|shatter|violet
+80|熊灵召唤|summon|beast|rise|earth
+81|混沌之军|mirror|dash|spin|red
+82|忽悠|portal|mirror|swap|earth
+83|疯狂生长|roots|trap|rise|green
+84|多重施法|fire|mirror|spin|orange
+85|墓碑|stone|summon|rise|green
+86|技能窃取|rune|mirror|swap|teal
+87|静态风暴|storm|prison|iris|blue
+88|复仇|shadow|spike|split|violet
+89|海妖之歌|music|wave|iris|teal
+90|冲击波|sun|wave|wipe|gold
+91|羁绊|chain|spirit|pull|white
+92|召唤佣兽|summon|stone|rise|shadow
+93|暗影之舞|shadow|wave|wipe|blue
+94|石化凝视|target|stone|shatter|green
+95|战斗专注|slash|storm|impact|red
+96|奔袭冲撞|dash|quake|impact|earth
+97|两极反转|gravity|quake|pull|violet
+98|伐木锯链|gear|chain|spin|red
+99|刺针扫射|spike|wave|impact|earth
+100|海象神拳|frost|hammer|impact|ice
+101|神秘之耀|rune|laser|iris|gold
+102|回光返照|shadow|shield|rise|blue
+103|裂地沟壑|quake|wave|shatter|earth
+104|决斗|slash|prison|split|red
+105|埋雷|trap|impact|shatter|orange
+106|无影拳|fire|slash|dash|orange
+107|磁化|stone|gravity|iris|earth
+108|黑暗之门|portal|fire|iris|red
+109|恐怖波动|mirror|shadow|spin|red
+110|超新星|sun|fire|rise|gold
+111|虚妄之诺|rune|shield|iris|gold
+112|严冬诅咒|frost|prison|shatter|ice
+113|磁场|shield|mirror|iris|blue
+114|猴子猴孙|summon|slash|spin|gold
+119|荆棘迷宫|roots|shadow|prison|pink
+120|地雷滚滚|dash|slash|spin|teal
+121|缚魂|chain|ink|pull|shadow
+123|野地束缚|roots|arrow|pull|green
+126|异化|portal|slash|swap|violet
+128|蜥蜴绝吻|meteor|fire|impact|orange
+129|竞技场|prison|sun|iris|red
+131|奇妙轮盘|circus|trap|spin|red
+135|天光现世|sun|hammer|rise|gold
+136|怒拳破|impact|dash|split|red
+137|踏地|quake|beast|impact|earth
+138|穿刺射击|laser|spirit|split|teal
+145|流派变换|slash|mirror|swap|red
+155|蛙之乐章|music|sound|iris|green
+`;
+  const palette={
+    violet:['#b78bff','#6940b3'],red:['#ff837f','#b73540'],blue:['#7bc5ff','#316eae'],
+    ice:['#c9f8ff','#6dbad4'],gold:['#ffe4a3','#d8a04f'],green:['#b6ef8b','#4c9e69'],
+    orange:['#ffc084','#d86b3b'],teal:['#93e7dd','#3a9a9c'],shadow:['#bcacce','#574a78'],
+    earth:['#e7c08d','#956940'],pink:['#f7b7e4','#a95999'],white:['#f7f1df','#9fabc2']
+  };
+  const catalog=Object.fromEntries(rows.trim().split('\n').map(line=>{
+    const [id,cue,first,second,mask,tone]=line.split('|');
+    return [Number(id),{id:Number(id),cue,first,second,mask,tone,colors:palette[tone]}];
+  }));
+  function get(id){return catalog[id]||null}
+  return {catalog,get,palette};
+});
