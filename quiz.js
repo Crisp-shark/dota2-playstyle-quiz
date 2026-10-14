@@ -4,45 +4,36 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(H){
   'use strict';
   // Each answer gives its question's main axis a strong or soft vote, plus one small cross-axis vote.
+  // Each quick choice is a situational item preference, not a claim that the item is optimal for a hero.
   const axes=[
-    {key:'engage',name:'交战时机',left:'先手开团',right:'后手反打'},
-    {key:'impact',name:'战场职责',left:'输出收割',right:'控制护航'},
-    {key:'tempo',name:'成长节奏',left:'早早参战',right:'发育成型'},
-    {key:'map',name:'地图路线',left:'正面集结',right:'边路牵制'},
-    {key:'style',name:'打法手感',left:'稳稳执行',right:'灵活奇招'}
+    {key:'engage',name:'出手顺序',left:'先手开',right:'后手接'},
+    {key:'impact',name:'战斗重心',left:'击杀',right:'救场'},
+    {key:'tempo',name:'经济取舍',left:'立即打',right:'先成型'},
+    {key:'map',name:'地图走法',left:'抱团',right:'分带'},
+    {key:'style',name:'出装风格',left:'稳妥',right:'奇招'}
   ];
-  const q=(axis,prompt,options)=>({axis,prompt,options:options.map(([text,value,bonusAxis,bonus])=>({text,value,bonusAxis,bonus}))});
+  const q=(axis,prompt,options)=>({axis,prompt,options:options.map(([item,text,value,bonusAxis,bonus])=>({item,text,image:`assets/items/${item}.png`,value,bonusAxis,bonus}))});
   const questions=[
-    q('engage','开局语音里大家还在等人发话，你会怎么打开局面？',[
-      ['直接喊人抢第一波主动权',-2,'tempo',-1],['先去关键路口试探，看到机会再叫人',-1,'map',1],['让对方先露位置，我来接住第一波',1,'impact',1],['守住反打技能，等他们先交关键招',2,'style',-1]]),
-    q('impact','一波团战即将开始，你最想完成哪件事？',[
-      ['盯住残血，收掉能决定战局的人',-2,'engage',1],['把火力集中到最该打的目标',-1,'style',-1],['限制对面关键技能，让队友安全输出',1,'engage',-1],['保住我方核心，团战就还有后手',2,'tempo',1]]),
-    q('tempo','十分钟时，身上刚攒出一笔钱，你更愿意……',[
-      ['现在就买小件，马上去打下一波',-2,'engage',-1],['先换一件能跟队友联动的装备',-1,'impact',1],['清完两波线，再带着关键装备参团',1,'map',1],['继续稳住经济，等真正的强势节点',2,'impact',-1]]),
-    q('map','两路兵线都在动，队伍需要一个选择。你会……',[
-      ['五人一起占住正面视野',-2,'impact',1],['和队友抱团压塔，逼对面接战',-1,'engage',-1],['自己处理远端兵线，随时传送回来',1,'tempo',1],['持续在边路牵制，换出地图空间',2,'style',1]]),
-    q('style','这局你的第一件关键装备会怎么定？',[
-      ['选最稳的那件，按已知节奏打',-2,'tempo',1],['参考阵容缺口，买能稳定起效的装备',-1,'impact',1],['看对面出装，临时调整一个新方案',1,'engage',1],['为一套出其不意的打法提前铺路',2,'map',1]]),
-    q('engage','对面五人消失，队友正在摸向河道。你会……',[
-      ['主动抢先手，打断他们的集结',-2,'map',-1],['探到位置后马上开雾抓一人',-1,'impact',-1],['拉开阵形，让对手先交第一轮技能',1,'style',-1],['守住核心与退路，把埋伏变成反打',2,'impact',1]]),
-    q('impact','敌方核心在视野里露头，但队友状态不满。你想……',[
-      ['直接找角度秒掉他',-2,'style',1],['补足伤害，确保这波抓人能成功',-1,'engage',-1],['先控住目标，等队友站到位',1,'engage',-1],['守住后排，别让这次出手被反包',2,'style',-1]]),
-    q('tempo','你刚到一个小强势期，地图却很安静。你会……',[
-      ['立刻找人，趁技能强势开打',-2,'engage',-1],['带队拿视野与小目标，把优势滚起来',-1,'map',-1],['吃完安全资源，再逼对手接下一波',1,'impact',-1],['先完成核心装备，让胜算更稳',2,'style',-1]]),
-    q('map','准备上高地时，对面一直不接正面。你会……',[
-      ['五人压在一起，把推进阵形保持完整',-2,'style',-1],['站好高地入口，逼他们正面交技能',-1,'impact',1],['去另一条线施压，等对面有人回防',1,'tempo',1],['不断拉扯两路，让对面来回奔跑',2,'style',1]]),
-    q('style','你最享受哪一种漂亮的胜利？',[
-      ['每次执行都稳，优势一点点兑现',-2,'tempo',1],['技能和站位严丝合缝地接上',-1,'impact',1],['临场变招，抓住敌人没看到的角度',1,'map',1],['用一套少见的组合突然改写战局',2,'engage',-1]]),
-    q('engage','你的大招刚好转好，队友也在附近。下一步是……',[
-      ['我先开，给大家一个明确的开战信号',-2,'impact',1],['盯住落单目标，抓住先手窗口',-1,'map',1],['留着大招，等对手先露出破绽',1,'style',1],['站在队友身后，专门接对面第一轮',2,'impact',1]]),
-    q('impact','队友被切入，敌方后排同时露出破绽。你更可能……',[
-      ['切向后排，先让对面减员',-2,'map',1],['补最后一段伤害，迅速结束这次交手',-1,'engage',1],['控住切入者，让队友先撤出危险区',1,'engage',1],['交出保命资源，把队友留在场上',2,'tempo',-1]]),
-    q('tempo','逆风时，地图上只有几块安全区域。你会……',[
-      ['找一次短促的开雾反扑',-2,'style',1],['跟队友一起拿能争的小资源',-1,'impact',1],['避开交战，稳稳处理能吃的线',1,'map',1],['把经济集中给关键时刻能翻盘的人',2,'impact',1]]),
-    q('map','最后一条外塔还在，你想怎样施加压力？',[
-      ['集合推进，把对面压回塔后',-2,'engage',-1],['先站住正面，让队友安全点塔',-1,'impact',1],['自己在侧翼接线，随时包过来',1,'engage',-1],['带远端兵线，迫使对面分人处理',2,'tempo',1]]),
-    q('style','决胜团开始前，队友问你怎么打。你会说……',[
-      ['按已经分好的职责走，别乱交技能',-2,'impact',1],['先确认谁开、谁留招，照计划执行',-1,'engage',-1],['看对面第一步，再用临场信号转向',1,'engage',1],['给我一点空间，我来找他们没想到的解法',2,'map',1]])
+    q('engage','河道撞人，你拿哪件？',[
+      ['blink','闪烁匕首',-2,'map',-1],['orchid','紫怨',-1,'impact',-1],['cyclone','吹风杖',1,'style',-1],['lotus_orb','清莲宝珠',2,'impact',1]]),
+    q('impact','团战开打，先掏哪件？',[
+      ['dagon','达贡之神力',-2,'style',1],['bloodthorn','血棘',-1,'engage',-1],['sheepstick','邪恶镰刀',1,'engage',-1],['glimmer_cape','微光披风',2,'style',-1]]),
+    q('tempo','十分钟攒了钱，做哪件？',[
+      ['urn_of_shadows','影之灵龛',-2,'engage',-1],['solar_crest','炎阳纹章',-1,'impact',1],['hand_of_midas','迈达斯之手',1,'impact',-1],['bfury','狂战斧',2,'map',1]]),
+    q('map','两路都来线，带哪件？',[
+      ['guardian_greaves','卫士胫甲',-2,'impact',1],['crimson_guard','赤红甲',-1,'style',-1],['travel_boots','远行鞋',1,'tempo',1],['manta','幻影斧',2,'impact',-1]]),
+    q('style','局势僵住，下一件？',[
+      ['black_king_bar','黑皇杖',-2,'engage',-1],['sphere','林肯法球',-1,'impact',-1],['meteor_hammer','陨星锤',1,'map',-1],['invis_sword','影刃',2,'map',1]]),
+    q('engage','肉山口对峙，选哪件？',[
+      ['overwhelming_blink','盛势闪光',-2,'impact',1],['rod_of_atos','阿托斯之棍',-1,'map',1],['ghost','幽魂权杖',1,'style',-1],['blade_mail','刃甲',2,'impact',1]]),
+    q('impact','队友被切，先用哪件？',[
+      ['nullifier','否决坠饰',-2,'engage',-1],['witch_blade','巫师之刃',-1,'tempo',-1],['force_staff','原力法杖',1,'map',1],['pavise','长盾',2,'style',-1]]),
+    q('tempo','刚赢一波，下一件？',[
+      ['spirit_vessel','魂之灵瓮',-2,'engage',-1],['ancient_janggo','韧鼓',-1,'map',-1],['mask_of_madness','疯狂面具',1,'impact',-1],['radiance','辉耀',2,'map',1]]),
+    q('map','对面缩高地，带哪件？',[
+      ['assault','强袭胸甲',-2,'tempo',-1],['shivas_guard','希瓦的守护',-1,'impact',1],['travel_boots_2','远行鞋二级',1,'tempo',1],['silver_edge','白银之锋',2,'style',1]]),
+    q('style','决胜团最后一格，选哪件？',[
+      ['satanic','撒旦之邪力',-2,'impact',-1],['skadi','斯嘉蒂之眼',-1,'tempo',1],['refresher','刷新球',1,'impact',1],['rapier','圣剑',2,'engage',-1]])
   ];
   const profiles=[
     {title:'雾中先锋',target:[12,55,18,32,50],tagline:'开雾的第一步，往往由你迈出。',strength:'你敢把短暂窗口变成集体行动。',watch:'先确认队友的距离和技能。'},
@@ -79,7 +70,7 @@
     });
     const dimensions=axes.map(axis=>({
       ...axis,
-      score:Math.max(0,Math.min(100,Math.round(50+scores[axis.key]*5)))
+      score:Math.max(0,Math.min(100,Math.round(50+scores[axis.key]*7.5)))
     }));
     const vector=dimensions.map(axis=>axis.score);
     const profile=profiles.reduce((best,item)=>distance(vector,item.target)<distance(vector,best.target)?item:best,profiles[0]);
