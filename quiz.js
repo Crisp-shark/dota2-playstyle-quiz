@@ -4,7 +4,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(H){
   'use strict';
   // Each answer gives its question's main axis a strong or soft vote, plus one small cross-axis vote.
-  // Each quick choice is a situational item preference, not a claim that the item is optimal for a hero.
+  // Every choice is a playstyle vote, not a claim that one build is optimal for a hero or patch.
   const axes=[
     {key:'engage',name:'出手顺序',left:'先手开',right:'后手接'},
     {key:'impact',name:'战斗重心',left:'击杀',right:'救场'},
@@ -12,28 +12,45 @@
     {key:'map',name:'地图走法',left:'抱团',right:'分带'},
     {key:'style',name:'出装风格',left:'稳妥',right:'奇招'}
   ];
-  const q=(axis,prompt,options)=>({axis,prompt,options:options.map(([item,text,value,bonusAxis,bonus])=>({item,text,image:`assets/items/${item}.png`,value,bonusAxis,bonus}))});
+  const q=(axis,prompt,options)=>({type:'item',axis,prompt,options:options.map(([item,text,value,bonusAxis,bonus])=>({item,text,image:`assets/items/${item}.png`,value,bonusAxis,bonus}))});
+  const forum=(axis,prompt,source,options)=>({type:'forum',axis,prompt,source,options:options.map(([text,value,bonusAxis,bonus,visual])=>({text,value,bonusAxis,bonus,...(visual&&visual.startsWith('item:')?{image:`assets/items/${visual.slice(5)}.png`}:{mark:visual||'✦'})}))});
   const questions=[
     q('engage','河道撞人，你拿哪件？',[
       ['blink','闪烁匕首',-2,'map',-1],['orchid','紫怨',-1,'impact',-1],['cyclone','吹风杖',1,'style',-1],['lotus_orb','清莲宝珠',2,'impact',1]]),
     q('impact','团战开打，先掏哪件？',[
       ['dagon','达贡之神力',-2,'style',1],['bloodthorn','血棘',-1,'engage',-1],['sheepstick','邪恶镰刀',1,'engage',-1],['glimmer_cape','微光披风',2,'style',-1]]),
+    forum('tempo','蚂蚁首件，电锤还是黯灭？','https://www.reddit.com/r/DotA2/comments/1l255oe/',[
+      ['电锤刷钱',2,'map',1,'item:maelstrom'],['黯灭打架',-2,'impact',-1,'item:desolator'],['紫怨抓单',-1,'map',1,'item:orchid'],['先补黑皇',1,'style',-1,'item:black_king_bar']]),
     q('tempo','十分钟攒了钱，做哪件？',[
       ['urn_of_shadows','影之灵龛',-2,'engage',-1],['solar_crest','炎阳纹章',-1,'impact',1],['hand_of_midas','迈达斯之手',1,'impact',-1],['bfury','狂战斧',2,'map',1]]),
     q('map','两路都来线，带哪件？',[
       ['guardian_greaves','卫士胫甲',-2,'impact',1],['crimson_guard','赤红甲',-1,'style',-1],['travel_boots','远行鞋',1,'tempo',1],['manta','幻影斧',2,'impact',-1]]),
+    forum('tempo','幻刺顺风，先走哪条路？','https://www.reddit.com/r/learndota2/comments/hqso2g/',[
+      ['狂战刷钱',2,'map',1,'item:bfury'],['黯灭开杀',-2,'impact',-1,'item:desolator'],['黑皇参团',-1,'style',-1,'item:black_king_bar'],['分身解控',1,'style',1,'item:manta']]),
     q('style','局势僵住，下一件？',[
       ['black_king_bar','黑皇杖',-2,'engage',-1],['sphere','林肯法球',-1,'impact',-1],['meteor_hammer','陨星锤',1,'map',-1],['invis_sword','影刃',2,'map',1]]),
     q('engage','肉山口对峙，选哪件？',[
       ['overwhelming_blink','盛势闪光',-2,'impact',1],['rod_of_atos','阿托斯之棍',-1,'map',1],['ghost','幽魂权杖',1,'style',-1],['blade_mail','刃甲',2,'impact',1]]),
+    forum('style','怕被控，又想补伤害？','https://www.reddit.com/r/DotA2/comments/1wdxd1m/',[
+      ['先出黑皇',-2,'engage',-1,'item:black_king_bar'],['林肯防点控',-1,'impact',1,'item:sphere'],['血棘抢输出',1,'impact',-1,'item:bloodthorn'],['跳刀找角度',2,'engage',-1,'item:blink']]),
     q('impact','队友被切，先用哪件？',[
       ['nullifier','否决坠饰',-2,'engage',-1],['witch_blade','巫师之刃',-1,'tempo',-1],['force_staff','原力法杖',1,'map',1],['pavise','长盾',2,'style',-1]]),
+    forum('impact','辅助第一件，救人还是开？','https://www.reddit.com/r/DotA2/comments/1u72nc9/',[
+      ['跳刀先开',-2,'engage',-1,'item:blink'],['炎阳助攻',-1,'tempo',-1,'item:solar_crest'],['微光护人',1,'style',-1,'item:glimmer_cape'],['推推救人',2,'map',1,'item:force_staff']]),
     q('tempo','刚赢一波，下一件？',[
       ['spirit_vessel','魂之灵瓮',-2,'engage',-1],['ancient_janggo','韧鼓',-1,'map',-1],['mask_of_madness','疯狂面具',1,'impact',-1],['radiance','辉耀',2,'map',1]]),
+    forum('map','全员齐了，先碰哪个目标？','https://www.reddit.com/r/DotA2/comments/1ivwfq5/',[
+      ['拿肉山盾',-2,'engage',-1,'盾'],['打折磨者',-1,'impact',1,'晶'],['先推中塔',1,'tempo',-1,'塔'],['分线控图',2,'tempo',1,'线']]),
     q('map','对面缩高地，带哪件？',[
       ['assault','强袭胸甲',-2,'tempo',-1],['shivas_guard','希瓦的守护',-1,'impact',1],['travel_boots_2','远行鞋二级',1,'tempo',1],['silver_edge','白银之锋',2,'style',1]]),
+    forum('map','领先一万，上高还是等盾？','https://www.reddit.com/r/DotA2/comments/1gqamln/',[
+      ['五人直接上',-2,'engage',-1,'攻'],['先拿盾再上',-1,'tempo',1,'盾'],['控图等失误',1,'style',-1,'眼'],['两路兵线拉扯',2,'style',1,'线']]),
     q('style','决胜团最后一格，选哪件？',[
-      ['satanic','撒旦之邪力',-2,'impact',-1],['skadi','斯嘉蒂之眼',-1,'tempo',1],['refresher','刷新球',1,'impact',1],['rapier','圣剑',2,'engage',-1]])
+      ['satanic','撒旦之邪力',-2,'impact',-1],['skadi','斯嘉蒂之眼',-1,'tempo',1],['refresher','刷新球',1,'impact',1],['rapier','圣剑',2,'engage',-1]]),
+    forum('style','决胜团前：神装还是买活？','https://www.reddit.com/r/learndota2/comments/1lwprhx/',[
+      ['留钱买活',-2,'impact',1,'命'],['补件保命',-1,'impact',1,'守'],['等队友信号',1,'engage',1,'旗'],['直接买神装',2,'tempo',1,'刃']]),
+    forum('engage','三路线没推，还开雾吗？','https://www.reddit.com/r/learndota2/comments/hovpqp/',[
+      ['直接开雾',-2,'map',-1,'雾'],['推中再抓',-1,'map',-1,'中'],['先分头带线',1,'map',1,'线'],['反蹲等人来',2,'impact',1,'守']])
   ];
   const profiles=[
     {title:'雾中先锋',target:[12,55,18,32,50],tagline:'开雾的第一步，往往由你迈出。',strength:'你敢把短暂窗口变成集体行动。',watch:'先确认队友的距离和技能。'},

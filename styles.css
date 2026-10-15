@@ -351,3 +351,17 @@ footer{border-top:1px solid var(--edge);padding:24px 2px 32px;display:flex;justi
 @media(max-width:760px){.quiz-screen{display:block;min-height:0;padding:29px 0 55px}.quiz-sidebar{padding:0 2px 17px}.quiz-sidebar h2{font-size:28px;margin:9px 0 4px}.quiz-sidebar>p{max-width:none;font-size:11px;line-height:1.6;margin:0}.quick-mark{display:none}.quiz-card{padding:22px 17px}.progress-track{margin:12px 0 23px}.quiz-card h3{font-size:clamp(25px,7vw,33px);margin:11px 0 22px}.question-options{gap:9px}.option{min-height:145px;padding:12px 7px 13px}.option b{top:10px;left:10px;width:23px;height:23px;font-size:13px}.option .item-art{width:98px;height:75px}.option .item-art img{width:94px;height:69px}.option .item-name{font-size:13px}.option i{display:block;top:11px;right:11px;font-size:14px}.question-bottom{margin-top:19px}}
 @media(max-width:380px){.option{min-height:132px}.option .item-art{width:83px;height:65px}.option .item-art img{width:82px;height:60px}.option .item-name{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.option .item-art img{transition:none}}
+
+/* Short forum dilemmas alternate with the image based item rounds. */
+.forum-options .option{background:radial-gradient(circle at 50% 34%,#40382f 0,#211f1d 69%);border-color:#79654e}
+.forum-options .option:hover{background:radial-gradient(circle at 50% 34%,#544534 0,#302824 69%)}
+.forum-options .option.selected{background:#4a382b}
+.forum-options .option .item-art::before{background:#e2a66e33}
+.forum-options .option .item-name{font-size:17px;letter-spacing:.3px}
+.debate-mark{flex:none;display:grid;place-items:center;width:78px;height:78px;position:relative;z-index:2;border:1px solid #b48d603d;border-radius:50%;background:radial-gradient(circle,#b9874930 0,#181f2070 67%);box-shadow:0 0 22px #d58c4523;color:var(--gold);font:italic 43px var(--serif);line-height:1}
+.forum-option:hover .debate-mark,.forum-option.item-active .debate-mark{border-color:var(--gold);box-shadow:0 0 27px #d58c4555;transform:scale(1.06)}
+.key-hint a{color:var(--gold);text-decoration:none;margin-left:16px;border-bottom:1px solid #bba07788}
+.key-hint a:hover{color:var(--paper);border-color:var(--paper)}
+@media(max-width:760px){.forum-options .option .item-name{font-size:14px}.debate-mark{width:67px;height:67px;font-size:37px}}
+@media(max-width:380px){.debate-mark{width:58px;height:58px;font-size:32px}.forum-options .option .item-name{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.debate-mark{transition:none}}
