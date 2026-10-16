@@ -1,76 +1,97 @@
 (function(){
   'use strict';
   const Quiz=window.DotaPersonality;
-  const key='dota2-playstyle-quiz-v4';
+  const Heroes=window.DotaQuizHeroes;
+  const key='dota2-playstyle-quiz-v5';
   const intro=document.getElementById('intro-screen');
+  const picker=document.getElementById('picker-screen');
   const quiz=document.getElementById('quiz-screen');
   const resultScreen=document.getElementById('result-screen');
   const questionContent=document.getElementById('question-content');
   const resultContent=document.getElementById('result-content');
   const startButton=document.getElementById('start-button');
+  const searchInput=document.getElementById('hero-search');
   const escape=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const choiceItems=[
-    {id:'blink',name:'跳刀',action:'闪烁',glyph:'✦',color:'#9bdcff'},
-    {id:'force',name:'推推棒',action:'推进',glyph:'➜',color:'#f0ae73'},
-    {id:'cyclone',name:'吹风杖',action:'旋风',glyph:'⟲',color:'#9fe9e6'},
-    {id:'bkb',name:'黑皇杖',action:'金色护盾',glyph:'⬡',color:'#f4d588'}
+    {id:'blink',glyph:'✦',color:'#9bdcff'},
+    {id:'force',glyph:'➜',color:'#f0ae73'},
+    {id:'cyclone',glyph:'⟲',color:'#9fe9e6'},
+    {id:'bkb',glyph:'⬡',color:'#f4d588'}
   ];
   let saved;
-  try{saved=JSON.parse(localStorage.getItem(key));}catch(_){saved=null}
-  let answers=Quiz.sanitize(saved&&saved.answers);
-  let index=Number.isInteger(saved&&saved.index)?Math.min(Math.max(saved.index,0),Quiz.questions.length):0;
-  const firstUnanswered=answers.findIndex(answer=>answer===null);
-  if(firstUnanswered>=0&&index>firstUnanswered)index=firstUnanswered;
-  if(firstUnanswered<0)index=Quiz.questions.length;
+  try{saved=JSON.parse(localStorage.getItem(key))}catch(_){saved=null}
+  let heroIds=Array.isArray(saved?.heroIds)?saved.heroIds.filter((id,i,list)=>Number.isInteger(id)&&Heroes.hero(id)&&list.indexOf(id)===i).slice(0,3):[];
+  let questions=Quiz.questionsFor(heroIds);
+  let answers=Quiz.sanitize(saved?.answers,heroIds);
+  let index=Number.isInteger(saved?.index)?Math.min(Math.max(saved.index,0),questions.length):0;
+  if(questions.length){
+    const firstUnanswered=answers.findIndex(answer=>answer===null);
+    index=firstUnanswered<0?questions.length:Math.min(index,firstUnanswered);
+  }
   let advanceTimer;
-
-  function save(){try{localStorage.setItem(key,JSON.stringify({answers,index}))}catch(_){}}
-  function show(screen){intro.hidden=screen!=='intro';quiz.hidden=screen!=='quiz';resultScreen.hidden=screen!=='result';window.scrollTo({top:0,behavior:'auto'})}
-  function optionHtml(option,choice,selected,isForum){
-    const visual=option.image
-      ?`<span class="item-art"><img src="./${escape(option.image)}" alt="" loading="eager" decoding="async"></span>`
-      :`<span class="debate-mark" aria-hidden="true">${escape(option.mark)}</span>`;
-    return `<button type="button" class="option${isForum?' forum-option':''}${selected===choice?' selected':''}" data-choice="${choice}" aria-pressed="${selected===choice}"><b>${String.fromCharCode(65+choice)}</b>${visual}<span class="item-name">${escape(option.text)}</span><i aria-hidden="true">↗</i></button>`;
+  function save(){try{localStorage.setItem(key,JSON.stringify({heroIds,answers,index}))}catch(_){}}
+  function show(screen){intro.hidden=screen!=='intro';picker.hidden=screen!=='picker';quiz.hidden=screen!=='quiz';resultScreen.hidden=screen!=='result';window.scrollTo({top:0,behavior:'auto'})}
+  function renderPicker(){
+    const slots=document.getElementById('picked-heroes');
+    slots.innerHTML=Array.from({length:3},(_,i)=>{
+      const hero=Heroes.hero(heroIds[i]);
+      return hero?`<button type="button" class="picked-slot filled" data-remove-hero="${hero.id}" aria-label="移除${escape(hero.name)}"><img src="./${escape(hero.image)}" alt=""><span><small>0${i+1} / 已选择</small><strong>${escape(hero.name)}</strong></span><b aria-hidden="true">×</b></button>`:`<div class="picked-slot empty"><span class="slot-number">0${i+1}</span><span>等待选择</span></div>`;
+    }).join('');
+    document.getElementById('picker-count').textContent=`${heroIds.length} / 3`;
+    const begin=document.getElementById('begin-quiz');
+    begin.disabled=heroIds.length!==3;
+    begin.innerHTML=heroIds.length===3?'开始专属测试 <span>↗</span>':`再选 ${3-heroIds.length} 位英雄 <span>↗</span>`;
+    const term=searchInput.value.trim().toLowerCase();
+    const found=Heroes.heroes.filter(hero=>!term||`${hero.name} ${hero.en}`.toLowerCase().includes(term));
+    document.getElementById('picker-filter-count').textContent=`${found.length} 位英雄`;
+    document.getElementById('hero-picker-grid').innerHTML=found.length?found.map(hero=>{
+      const active=heroIds.includes(hero.id);
+      return `<button type="button" class="pick-hero${active?' is-picked':''}" data-hero-id="${hero.id}" aria-pressed="${active}" ${heroIds.length===3&&!active?'disabled':''}><img src="./${escape(hero.image)}" alt="" loading="lazy"><span><strong>${escape(hero.name)}</strong><small>${escape(hero.en)}</small></span><i aria-hidden="true">${active?'✓':'+'}</i></button>`;
+    }).join(''):'<p class="picker-empty">没找到这位英雄，试试其他名字。</p>';
+    if(picker.hidden)show('picker');
+  }
+  function toggleHero(id){
+    const at=heroIds.indexOf(id);
+    if(at>=0)heroIds.splice(at,1);
+    else if(heroIds.length<3&&Heroes.hero(id))heroIds.push(id);
+    else return;
+    questions=Quiz.questionsFor(heroIds);
+    answers=Quiz.sanitize(null,heroIds);
+    index=0;
+    save();renderPicker();
+  }
+  function optionHtml(option,choice,selected){
+    return `<button type="button" class="option hero-option${selected===choice?' selected':''}" data-choice="${choice}" aria-pressed="${selected===choice}"><b>${String.fromCharCode(65+choice)}</b><span class="item-name">${escape(option.text)}</span><i aria-hidden="true">↗</i></button>`;
   }
   function renderQuestion(){
     clearTimeout(advanceTimer);
-    if(index>=Quiz.questions.length){renderResult();return}
-    const question=Quiz.questions[index];
-    const selected=answers[index];
-    const progress=Math.round(answers.filter(answer=>answer!==null).length/Quiz.questions.length*100);
-    const isForum=question.type==='forum';
-    questionContent.innerHTML=`<div class="question-top"><span>ROUND ${String(index+1).padStart(2,'0')} <small>/ ${Quiz.questions.length}</small></span><span>${progress}% 完成</span></div><div class="progress-track" role="progressbar" aria-label="答题进度" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><i style="width:${progress}%"></i></div><div class="quick-kicker">${isForum?'玩家热议 · 你站哪边':'看战况 · 选装备'}</div><h3>${escape(question.prompt)}</h3><div class="question-options${isForum?' forum-options':''}">${question.options.map((option,choice)=>optionHtml(option,choice,selected,isForum)).join('')}</div><div class="question-bottom"><button id="previous" class="subtle-button" type="button" ${index===0?'disabled':''}>← 上一题</button><span class="question-auto" role="status" aria-live="polite">点一下，自动进入下一题</span></div><p class="key-hint">也可按数字键 1–4 快选${isForum?`<a href="${escape(question.source)}" target="_blank" rel="noopener noreferrer">讨论原帖 ↗</a>`:''}</p>`;
+    if(questions.length!==9){renderPicker();return}
+    if(index>=questions.length){renderResult();return}
+    const question=questions[index],selected=answers[index];
+    const progress=Math.round(answers.filter(answer=>answer!==null).length/questions.length*100);
+    document.getElementById('quiz-party').innerHTML=heroIds.map((id,i)=>{const hero=Heroes.hero(id);return `<span class="party-hero${Math.floor(index/3)===i?' current':''}"><img src="./${escape(hero.image)}" alt=""><small>${escape(hero.name)}</small></span>`}).join('');
+    questionContent.innerHTML=`<div class="question-top"><span>ROUND ${String(index+1).padStart(2,'0')} <small>/ ${questions.length}</small></span><span>${progress}% 完成</span></div><div class="progress-track" role="progressbar" aria-label="答题进度" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><i style="width:${progress}%"></i></div><div class="question-hero"><img src="./${escape(question.hero.image)}" alt="" loading="eager"><div><span class="quick-kicker">${escape(question.hero.name)} / ${index%3+1} OF 3</span><strong>${escape(question.hero.en)}</strong><small>${question.kind==='signature'?`技能意象 · ${escape(question.cue)}`:question.kind==='situation'?'对局情境':'你的高光'}</small></div></div><h3>${escape(question.prompt)}</h3><div class="question-options hero-options">${question.options.map((option,choice)=>optionHtml(option,choice,selected)).join('')}</div><div class="question-bottom"><button id="previous" class="subtle-button" type="button" ${index===0?'disabled':''}>← 上一题</button><span class="question-auto" role="status" aria-live="polite">点一下，自动进入下一题</span></div><div class="question-links"><button id="change-heroes" type="button">重选英雄</button><span>也可按数字键 1–4</span></div>`;
     questionContent.querySelectorAll('[data-choice]').forEach(button=>button.addEventListener('click',()=>select(Number(button.dataset.choice))));
     questionContent.querySelector('#previous').addEventListener('click',()=>{if(index>0){index--;save();renderQuestion()}});
+    questionContent.querySelector('#change-heroes').addEventListener('click',renderPicker);
     show('quiz');
   }
   function select(choice){
-    if(!Number.isInteger(choice)||choice<0||choice>3||index>=Quiz.questions.length)return;
+    if(!Number.isInteger(choice)||choice<0||choice>3||index>=questions.length||quiz.hidden)return;
     clearTimeout(advanceTimer);
-    answers[index]=choice;
-    save();
-    const item=choiceItems[choice];
-    const chosen=questionContent.querySelector(`[data-choice="${choice}"]`);
+    answers[index]=choice;save();
+    const item=choiceItems[choice],chosen=questionContent.querySelector(`[data-choice="${choice}"]`);
     questionContent.querySelectorAll('[data-choice]').forEach(button=>{
       const active=button===chosen;
-      button.classList.toggle('selected',active);
-      button.classList.remove('item-active');
-      button.removeAttribute('data-item');
-      button.style.removeProperty('--item-color');
-      button.querySelector('i').textContent='↗';
-      button.setAttribute('aria-pressed',String(active));
+      button.classList.toggle('selected',active);button.classList.remove('item-active');
+      button.removeAttribute('data-item');button.style.removeProperty('--item-color');
+      button.querySelector('i').textContent='↗';button.setAttribute('aria-pressed',String(active));
     });
-    chosen.dataset.item=item.id;
-    chosen.style.setProperty('--item-color',item.color);
-    chosen.querySelector('i').textContent=item.glyph;
-    void chosen.offsetWidth;
-    chosen.classList.add('item-active');
+    chosen.dataset.item=item.id;chosen.style.setProperty('--item-color',item.color);chosen.querySelector('i').textContent=item.glyph;
+    void chosen.offsetWidth;chosen.classList.add('item-active');
     const status=questionContent.querySelector('.question-auto');
-    status.textContent=`${Quiz.questions[index].options[choice].text} · 已选`;
-    status.style.setProperty('--item-color',item.color);
-    status.classList.remove('item-flash');
-    void status.offsetWidth;
-    status.classList.add('item-flash');
+    status.textContent=`${questions[index].options[choice].text} · 已选`;status.style.setProperty('--item-color',item.color);
+    status.classList.remove('item-flash');void status.offsetWidth;status.classList.add('item-flash');
     const questionIndex=index;
     advanceTimer=setTimeout(()=>{if(index===questionIndex){index++;save();renderQuestion()}},window.matchMedia('(prefers-reduced-motion: reduce)').matches?260:540);
   }
@@ -136,11 +157,11 @@
     grid.innerHTML=filtered.length?filtered.map(match=>`<button type="button" class="atlas-hero" data-atlas-hero="${match.hero.id}" aria-label="查看${escape(match.hero.name)}的出场动画"><img src="./${escape(match.hero.image)}" alt="" loading="lazy"><span><strong>${escape(match.hero.name)}</strong><small>${escape(traits(match.hero)[0])} · 查看出场 ↗</small></span></button>`).join(''):'<p class="atlas-empty">没有找到这位英雄，试试其他名字。</p>';
   }
   function renderResult(){
-    const result=Quiz.analyze(answers);
+    const result=Quiz.analyze(heroIds,answers);
     if(!result){index=Math.max(0,answers.findIndex(answer=>answer===null));renderQuestion();return}
     const profile=result.profile;
-    resultContent.innerHTML=`<div class="result-top"><div><span class="section-index">02 / YOUR PLAYSTYLE</span><p class="result-kicker">你的战局称号</p><h2 id="result-heading">${escape(profile.title)}</h2><p class="result-tagline">${escape(profile.tagline)}</p></div><div class="result-stamp">ALL<br>${result.heroCount} HEROES <span>↗</span></div></div><div class="matches-heading"><span class="section-index">HERO ECHOES</span><h3>与你同频的英雄</h3><p>先点击卡片揭晓英雄；全部 ${result.heroCount} 位英雄都参与风格匹配。</p></div><div class="match-grid">${result.matches.slice(0,3).map((match,rank)=>heroCard(match,rank)).join('')}</div><div class="result-story"><div><span class="story-label">你擅长的事 / STRENGTH</span><p>${escape(profile.strength)}</p></div><div><span class="story-label">留意这一点 / WATCH OUT</span><p>${escape(profile.watch)}</p></div></div><div class="axes-heading"><div><span class="section-index">YOUR FIVE AXES</span><h3>你的对局偏好</h3></div><p>五个方向都可以随阵容与局势变化。</p></div><div class="axis-grid">${result.dimensions.map(axis=>`<div class="axis-card"><div class="axis-head"><strong>${escape(axis.name)}</strong><span>${escape(axis.score>=50?axis.right:axis.left)}</span></div><div class="axis-bar"><i style="width:${axis.score}%"></i></div><div class="axis-ends"><span>${escape(axis.left)}</span><span>${escape(axis.right)}</span></div></div>`).join('')}</div><details class="hero-atlas" id="hero-atlas"><summary><span>查看全部 ${result.heroCount} 位英雄</span><small>点击英雄查看出场动画 ↗</small></summary><div class="atlas-tools"><label for="atlas-search">搜索英雄</label><input id="atlas-search" type="search" placeholder="输入中文或英文名" autocomplete="off"><span id="atlas-count"></span></div><div class="atlas-grid" id="atlas-grid"></div></details><p class="result-disclaimer">英雄与称号只是对装备与战局选择的趣味联想，不代表实战出装或上分推荐。</p><div class="result-actions"><button id="copy-result" type="button" class="primary-button">复制结果 <span>↗</span></button><button id="restart" type="button" class="subtle-button">重新测试 ↺</button></div><p class="copy-status" id="copy-status" role="status"></p>`;
-    resultContent.querySelector('.match-grid').addEventListener('click',event=>{const card=event.target.closest('[data-reveal-index]');if(card){const rank=Number(card.dataset.revealIndex);revealHero(result.matches[rank],rank,card)}});
+    resultContent.innerHTML=`<div class="result-top"><div><span class="section-index">03 / YOUR PERSONA</span><p class="result-kicker">你的 Dota 2 战局人格</p><h2 id="result-heading">${escape(profile.title)}</h2><p class="result-tagline">${escape(profile.tagline)}</p></div><div class="result-stamp">3 HEROES<br>9 CHOICES <span>↗</span></div></div><div class="favorite-result"><div><span class="section-index">YOUR THREE HEROES</span><h3>从这三位英雄出发</h3></div><div class="favorite-result-grid">${result.favorites.map((hero,i)=>`<div class="favorite-result-card"><img src="./${escape(hero.image)}" alt=""><span><small>0${i+1} / ${escape(window.DotaHeroEntrances.get(hero.id).cue)}</small><strong>${escape(hero.name)}</strong></span></div>`).join('')}</div></div><div class="result-story"><div><span class="story-label">你的拿手戏 / STRENGTH</span><p>${escape(profile.strength)}</p></div><div><span class="story-label">小心这一点 / WATCH OUT</span><p>${escape(profile.watch)}</p></div></div><div class="matches-heading"><span class="section-index">HERO ECHOES</span><h3>再认识 3 位同频英雄</h3><p>先点击卡片，揭晓他们的专属出场动画。</p></div><div class="match-grid">${result.echoes.map((match,rank)=>heroCard(match,rank)).join('')}</div><div class="axes-heading"><div><span class="section-index">YOUR FIVE AXES</span><h3>你的对局偏好</h3></div><p>五个方向都可以随阵容与局势变化。</p></div><div class="axis-grid">${result.dimensions.map(axis=>`<div class="axis-card"><div class="axis-head"><strong>${escape(axis.name)}</strong><span>${escape(axis.score>=50?axis.right:axis.left)}</span></div><div class="axis-bar"><i style="width:${axis.score}%"></i></div><div class="axis-ends"><span>${escape(axis.left)}</span><span>${escape(axis.right)}</span></div></div>`).join('')}</div><details class="hero-atlas" id="hero-atlas"><summary><span>查看全部 ${result.heroCount} 位英雄</span><small>点击英雄查看出场动画 ↗</small></summary><div class="atlas-tools"><label for="atlas-search">搜索英雄</label><input id="atlas-search" type="search" placeholder="输入中文或英文名" autocomplete="off"><span id="atlas-count"></span></div><div class="atlas-grid" id="atlas-grid"></div></details><p class="result-disclaimer">英雄与人格只是这 9 次选择的趣味联想，不代表心理测评或上分建议。</p><div class="result-actions"><button id="copy-result" type="button" class="primary-button">复制结果 <span>↗</span></button><button id="restart" type="button" class="subtle-button">重新选英雄 ↺</button></div><p class="copy-status" id="copy-status" role="status"></p>`;
+    resultContent.querySelector('.match-grid').addEventListener('click',event=>{const card=event.target.closest('[data-reveal-index]');if(card){const rank=Number(card.dataset.revealIndex);revealHero(result.echoes[rank],rank,card)}});
     resultContent.querySelector('#hero-atlas').addEventListener('toggle',event=>{if(event.target.open)renderAtlas(result.matches,resultContent.querySelector('#atlas-search').value)});
     resultContent.querySelector('#atlas-grid').addEventListener('click',event=>{const button=event.target.closest('[data-atlas-hero]');if(button){const match=result.matches.find(item=>item.hero.id===Number(button.dataset.atlasHero));if(match)revealHero(match,-1,button,true)}});
     resultContent.querySelector('#atlas-search').addEventListener('input',event=>renderAtlas(result.matches,event.target.value));
@@ -149,12 +170,16 @@
       try{await navigator.clipboard.writeText(Quiz.summary(result));status.textContent='结果已复制，可以发给队友。'}
       catch(_){status.textContent='复制失败，请检查浏览器的剪贴板权限。'}
     });
-    resultContent.querySelector('#restart').addEventListener('click',()=>{answers=Quiz.sanitize(null);index=0;save();renderQuestion()});
+    resultContent.querySelector('#restart').addEventListener('click',()=>{heroIds=[];questions=[];answers=[];index=0;searchInput.value='';save();renderPicker()});
     show('result');
   }
-  startButton.addEventListener('click',renderQuestion);
+  startButton.addEventListener('click',()=>{if(questions.length===9&&index<9)renderQuestion();else renderPicker()});
+  searchInput.addEventListener('input',renderPicker);
+  document.getElementById('hero-picker-grid').addEventListener('click',event=>{const button=event.target.closest('[data-hero-id]');if(button)toggleHero(Number(button.dataset.heroId))});
+  document.getElementById('picked-heroes').addEventListener('click',event=>{const button=event.target.closest('[data-remove-hero]');if(button)toggleHero(Number(button.dataset.removeHero))});
+  document.getElementById('begin-quiz').addEventListener('click',()=>{if(heroIds.length===3){questions=Quiz.questionsFor(heroIds);answers=Quiz.sanitize(null,heroIds);index=0;save();renderQuestion()}});
+  document.getElementById('picker-back').addEventListener('click',()=>show('intro'));
   document.addEventListener('keydown',event=>{if(quiz.hidden||event.altKey||event.ctrlKey||event.metaKey||event.target.closest('input'))return;const number=Number(event.key);if(number>=1&&number<=4)select(number-1)});
-  if(firstUnanswered<0)renderResult();
-  else if(answers.some(answer=>answer!==null)){startButton.innerHTML='继续快选 <span>↗</span>';show('intro')}
-  else show('intro');
+  if(questions.length===9&&index===9)renderResult();
+  else{if(questions.length===9)startButton.innerHTML=answers.some(answer=>answer!==null)?'继续专属测试 <span>↗</span>':'开始专属测试 <span>↗</span>';show('intro')}
 })();

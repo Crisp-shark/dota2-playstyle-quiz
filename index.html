@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101719">
-  <meta name="description" content="看图选装备，也给 Dota 玩家热议话题站队。18 次直觉选择，发现你的战局称号与同频英雄。">
+  <meta name="description" content="先选三位喜欢的 Dota 2 英雄，再回答九道围绕他们的快题，解锁你的战局人格。">
   <title>战局人格 · Dota 2 玩家性格测试</title>
-  <link rel="stylesheet" href="./styles.css?v=20261015-1">
+  <link rel="stylesheet" href="./styles.css?v=20261016-2">
 </head>
 <body>
   <div class="site-shell">
@@ -17,38 +17,45 @@
     <main>
       <section id="intro-screen" class="intro-screen" aria-labelledby="intro-title">
         <div class="intro-copy">
-          <div class="eyebrow"><span class="eyebrow-line"></span> 你的战局，你的打法</div>
-          <h1 id="intro-title">这一波，<br><em>你会怎么选？</em></h1>
-          <p>看图选装备，也给玩家热议话题站队。每题都很短，按第一反应选出你的战局风格。</p>
-          <div class="intro-actions"><button id="start-button" class="primary-button" type="button">开始快选 <span>↗</span></button><span>约 3 分钟 · 18 道短题 · 无需登录</span></div>
-          <div class="intro-stats"><div><strong>18</strong><span>道混合快选</span></div><div><strong>08</strong><span>个玩家热议话题</span></div><div><strong>127</strong><span>位英雄参与匹配</span></div></div>
+          <div class="eyebrow"><span class="eyebrow-line"></span> 你的本命，透露你的打法</div>
+          <h1 id="intro-title">先选英雄，<br><em>再看你是谁。</em></h1>
+          <p>挑出最喜欢的 3 位英雄。题目会围绕他们展开；9 次直觉选择后，揭晓你的战局人格。</p>
+          <div class="intro-actions"><button id="start-button" class="primary-button" type="button">挑选本命英雄 <span>↗</span></button><span>约 2 分钟 · 无需登录</span></div>
+          <div class="intro-stats"><div><strong>03</strong><span>位喜欢的英雄</span></div><div><strong>09</strong><span>道专属快题</span></div><div><strong>127</strong><span>位英雄可选</span></div></div>
         </div>
         <div class="hero-stage" aria-label="三位 Dota 2 英雄画像">
           <div class="stage-orbit orbit-one"></div><div class="stage-orbit orbit-two"></div>
           <figure class="stage-card card-back"><img src="./assets/91.jpg" alt="艾欧"><figcaption>共鸣者 <small>IO</small></figcaption></figure>
           <figure class="stage-card card-mid"><img src="./assets/2.jpg" alt="斧王"><figcaption>先行者 <small>AXE</small></figcaption></figure>
           <figure class="stage-card card-front"><img src="./assets/74.jpg" alt="祈求者"><figcaption>谋局者 <small>INVOKER</small></figcaption></figure>
-          <div class="stage-label">01 / 发现你的对局直觉</div>
+          <div class="stage-label">01 / 从你喜欢的英雄开始</div>
         </div>
       </section>
+      <section id="picker-screen" class="picker-screen" aria-labelledby="picker-heading" hidden>
+        <div class="picker-head"><div><span class="section-index">01 / PICK YOUR THREE</span><h2 id="picker-heading">选 3 位你最喜欢的英雄</h2><p>按喜欢来选，不用考虑阵容。选满三位，专属题目就会出现。</p></div><div class="picker-count" id="picker-count" aria-live="polite">0 / 3</div></div>
+        <div id="picked-heroes" class="picked-heroes" aria-label="已选择的英雄"></div>
+        <div class="picker-tools"><label for="hero-search">搜索英雄</label><input id="hero-search" type="search" placeholder="中文或英文名，比如谜团 / Enigma" autocomplete="off"><span id="picker-filter-count"></span></div>
+        <div id="hero-picker-grid" class="hero-picker-grid"></div>
+        <div class="picker-actions"><button id="begin-quiz" class="primary-button" type="button" disabled>选满 3 位，开始测试 <span>↗</span></button><button id="picker-back" class="subtle-button" type="button">← 返回首页</button></div>
+      </section>
       <section id="quiz-screen" class="quiz-screen" aria-labelledby="quiz-heading" hidden>
-        <div class="quiz-sidebar"><span class="section-index">01 / QUICK PICKS</span><h2 id="quiz-heading">战局快选</h2><p>装备图与玩家热议穿插出现。选你自己会做的事。</p><div class="quick-mark" aria-hidden="true">✦<span>18 ROUNDS</span></div></div>
+        <div class="quiz-sidebar"><span class="section-index">02 / HERO ROUNDS</span><h2 id="quiz-heading">你的英雄专属题</h2><p>每位英雄 3 题；按第一反应选即可。</p><div id="quiz-party" class="quiz-party"></div></div>
         <article class="quiz-card" id="question-content"></article>
       </section>
       <section id="result-screen" class="result-screen" aria-labelledby="result-heading" hidden>
         <div id="result-content"></div>
       </section>
-      <section class="method-note"><div class="note-symbol" aria-hidden="true">✧</div><div><h2>关于这份测试</h2><p>这是一份玩家创作的娱乐测试。18 道短题里有 10 道装备快选和 8 道玩家讨论改编题，观察 5 个打法倾向。全部 127 位英雄参与风格匹配；题目没有标准答案，结果不代表心理测评或正式出装建议。</p></div></section>
+      <section class="method-note"><div class="note-symbol" aria-hidden="true">✧</div><div><h2>关于这份测试</h2><p>这是一份玩家创作的娱乐测试。从 127 位英雄中选出 3 位，系统会借他们的技能意象和打法情境生成 9 道短题。答案观察 5 个打法倾向，进而联想人格与同频英雄；题目没有标准答案，结果不代表心理测评或正式上分建议。</p></div></section>
     </main>
     <footer class="site-footer">
-      <div class="footer-meta"><span>战局人格 / DOTA 2 PLAYSTYLE QUIZ</span><span>非官方玩家作品 · 英雄画像与装备图标归 Valve 所有</span></div>
+      <div class="footer-meta"><span>战局人格 / DOTA 2 PLAYSTYLE QUIZ</span><span>非官方玩家作品 · 英雄画像归 Valve 所有</span></div>
       <div class="footer-contact"><p>有任何有趣想法，随时欢迎与<strong>“NF700”</strong>交流。</p><div class="footer-contact-links"><span>WeChat：<b>Clannad928</b></span><a href="mailto:yuan_cheng@u.nus.edu">Email：yuan_cheng@u.nus.edu</a></div></div>
     </footer>
   </div>
   <script src="./heroes.js"></script>
-  <script src="./quiz.js?v=20261015-1"></script>
   <script src="./hero-entrances.js"></script>
+  <script src="./quiz.js?v=20261016-2"></script>
   <script src="./hero-reveal-canvas.js"></script>
-  <script src="./app.js?v=20261015-1"></script>
+  <script src="./app.js?v=20261016-2"></script>
 </body>
 </html>
